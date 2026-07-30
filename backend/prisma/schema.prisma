@@ -38,7 +38,7 @@ model ComplianceRuleObject {
   taxonomy         String
   frequency        String
   triggerCondition String?
-  deadlineRule     String
+  deadlineRule     String?
   deadlineDays     Int?
   evidenceRequired String[]
   source           Json?
@@ -71,13 +71,13 @@ model ComplianceTask {
 
 model Evidence {
   id          String   @id @default(cuid())
-  taskId      String
+  taskId      String?
   filename    String
   fileData    String?
   fileSize    String?
   contentHash String
   uploadedBy  String
-  task        ComplianceTask @relation(fields: [taskId], references: [id])
+  task        ComplianceTask? @relation(fields: [taskId], references: [id])
   createdAt   DateTime @default(now())
 }
 
