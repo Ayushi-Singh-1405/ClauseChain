@@ -46,10 +46,23 @@ Build a fully functional ClauseChain compliance application for SEBI Hackathon (
 - All pages have loading/empty/error states
 - **Both projects typecheck clean**
 
+## Review Feedback (Jul 30)
+- Pipeline producing output matching ground truth almost exactly (90% confidence, correct EVENT_DRIVEN frequency, correct trigger conditions, correct source citations)
+- Audit trail hash-chaining verified working
+- Tasks correctly collapse to 2 (matching 2 real obligations) while Rule Review shows clause-level granularity
+
+### Bugs Fixed
+1. React key warning in register page — `Fragment` with `key` prop instead of bare `<>`
+2. Copilot 402 error — capped `max_tokens` to 1024 in `callLLM()`
+
+### Checked — Not a Bug
+- 10 clauses in DB vs 9 in ground truth: extra is `**4.3.**` header line, harmless low-content clause
+
 ## Remaining
 
 ### Phase 4 — Demo + Deploy + Polish
 - [ ] End-to-end demo walkthrough
+- [ ] Top up OpenRouter account ($5) to prevent 402 mid-demo
 - [ ] Pre-seed DB with demo state
 - [ ] Deploy backend (Render/Railway)
 - [ ] Deploy frontend (Vercel/Render)
