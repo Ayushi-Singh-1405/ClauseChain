@@ -41,7 +41,7 @@ Question: ${question}
 Answer concisely. Cite the relevant CRO ID(s) in brackets like [CRO_abcd1234].`
 
   try {
-    const answer = await callLLM(prompt)
+    const answer = await callLLM(prompt, undefined, 1024)
     res.json({ answer, rulesCount: rules.length })
   } catch (e) {
     res.status(500).json({ error: (e as Error).message })

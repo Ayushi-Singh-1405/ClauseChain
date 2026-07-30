@@ -8,7 +8,7 @@ interface OpenRouterResponse {
   }[]
 }
 
-export async function callLLM(prompt: string, systemPrompt?: string): Promise<string> {
+export async function callLLM(prompt: string, systemPrompt?: string, maxTokens?: number): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error('OPENROUTER_API_KEY not set')
 
@@ -26,6 +26,7 @@ export async function callLLM(prompt: string, systemPrompt?: string): Promise<st
         { role: 'user', content: prompt },
       ],
       temperature: 0.1,
+      ...(maxTokens !== undefined ? { max_tokens: maxTokens } : {}),
     }),
   })
 
