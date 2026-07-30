@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -69,8 +69,8 @@ export default function RegisterPage() {
               </TableHeader>
               <TableBody>
                 {rules.map((r) => (
-                  <>
-                    <TableRow key={r.id} className="cursor-pointer" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
+                  <Fragment key={r.id}>
+                    <TableRow className="cursor-pointer" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
                       <TableCell className="font-medium">{r.obligation}</TableCell>
                       <TableCell><Badge variant="secondary">{r.frequency}</Badge></TableCell>
                       <TableCell>{r.actorRole}</TableCell>
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                       <TableCell>{r.circular.ref || r.circular.title}</TableCell>
                     </TableRow>
                     {expanded === r.id && (
-                      <TableRow key={`${r.id}-tasks`}>
+                      <TableRow>
                         <TableCell colSpan={7} className="bg-muted/30 p-4">
                           {r.tasks.length === 0 ? (
                             <p className="text-sm text-muted-foreground">No tasks generated.</p>
@@ -100,7 +100,7 @@ export default function RegisterPage() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
