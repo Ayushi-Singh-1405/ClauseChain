@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Circular {
+  id          String   @id @default(cuid())
+  title       String
+  source      String
+  ref         String?
+  rawText     String
+  contentHash String   @unique
+  status      String   @default("ingested")
+  createdAt   DateTime @default(now())
+  clauses     Clause[]
+  rules       ComplianceRuleObject[]
+}
+
+model Clause {
+  id         String   @id @default(cuid())
+  circularId String
+  citationId String
+  rawText    String
+  circular   Circular @relation(fields: [circularId], references: [id])
+  rules      ComplianceRuleObject[]
+  createdAt  DateTime @default(now())
+}
+
+model ComplianceRuleObject {
+  id               String   @id @default(cuid())
+  circularId       String
+  clauseId         String?
+  obligation       String
+  actorRole        String
+  taxonomy         String
+  frequency        String
+  triggerCondition String?
+  deadlineRule     String
+  deadlineDays     Int?
+  evidenceRequired String[]
+  source           Json?
+  penalty          String?
+  status           String   @default("pending")
+  confidence       Float?
+  version          Int      @default(1)
+  approvedBy       String?
+  rejectionReason  String?
+  circular         Circular @relation(fields: [circularId], references: [id])
+  clause           Clause?  @relation(fields: [clauseId], references: [id])
+  tasks            ComplianceTask[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ComplianceTask {
+  id           String   @id @default(cuid())
+  ruleObjectId String
+  title        String
+  owner        String
+  dueDate      DateTime
+  frequency    String
+  status       String   @default("todo")
+  ruleObject   ComplianceRuleObject @relation(fields: [ruleObjectId], references: [id])
+  evidence     Evidence[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Evidence {
+  id          String   @id @default(cuid())
+  taskId      String
+  filename    String
+  fileData    String?
+  fileSize    String?
+  contentHash String
+  uploadedBy  String
+  task        ComplianceTask @relation(fields: [taskId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model AuditEntry {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actor      String
+  actorType  String
+  details    String?
+  prevHash   String?
+  entryHash  String
+  createdAt  DateTime @default(now())
+}

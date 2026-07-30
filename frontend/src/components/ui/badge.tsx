@@ -1,48 +1,52 @@
-import * as React from "react"
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
+import { cva, type VariantProps } from "class-variance-authority"
+
 import { cn } from "@/lib/utils"
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "compliant" | "pending" | "under-review" | "at-risk" | "overdue" | "breach"
+const badgeVariants = cva(
+  "group/badge inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        secondary:
+          "bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80",
+        destructive:
+          "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
+        outline:
+          "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+        ghost:
+          "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function Badge({
+  className,
+  variant = "default",
+  render,
+  ...props
+}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
+  return useRender({
+    defaultTagName: "span",
+    props: mergeProps<"span">(
+      {
+        className: cn(badgeVariants({ variant }), className),
+      },
+      props
+    ),
+    render,
+    state: {
+      slot: "badge",
+      variant,
+    },
+  })
 }
 
-function Badge({ className, variant = "default", ...props }: BadgeProps) {
-  const variantStyles = {
-    default: "bg-bg-card-hover text-text-secondary",
-    compliant: "bg-status-compliant/10 text-status-compliant",
-    pending: "bg-status-pending/10 text-status-pending",
-    "under-review": "bg-status-under-review/10 text-status-under-review",
-    "at-risk": "bg-status-at-risk/10 text-status-at-risk",
-    overdue: "bg-status-overdue/10 text-status-overdue",
-    breach: "bg-status-breach/10 text-status-breach",
-  }
-
-  const dotStyles = {
-    default: "bg-text-secondary",
-    compliant: "bg-status-compliant",
-    pending: "bg-status-pending",
-    "under-review": "bg-status-under-review",
-    "at-risk": "bg-status-at-risk",
-    overdue: "bg-status-overdue",
-    breach: "bg-status-breach",
-  }
-
-  return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
-        variantStyles[variant],
-        className
-      )}
-      {...props}
-    >
-      <span className={cn("h-1.5 w-1.5 rounded-full", dotStyles[variant])} />
-      {variant === "breach" ? (
-        <span className="font-bold">{props.children}</span>
-      ) : (
-        props.children
-      )}
-    </div>
-  )
-}
-
-export { Badge }
+export { Badge, badgeVariants }

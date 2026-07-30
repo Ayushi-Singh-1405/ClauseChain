@@ -1,0 +1,40 @@
+{
+  "note": "PLACEHOLDER data for populating the Circulars list so it doesn't look empty with just the live CSCRF demo entry. These are NOT ingested/processed for real \u2014 titles and metadata only, reused from the taxonomy already used elsewhere in the docs. Do not claim these were processed by the real pipeline; if asked, be upfront that only the CSCRF entry is live.",
+  "circulars": [
+    {
+      "title": "Enhanced KYC for High-Value Trading Accounts",
+      "reference": "SEBI/HO/MIRSD/POD-1/P/CIR/2026/108",
+      "taxonomy": "KYC/AML",
+      "date": "2026-07-08",
+      "status": "seeded_context_only"
+    },
+    {
+      "title": "Disclosure Norms for Related Party Transactions",
+      "reference": "SEBI/HO/CFD/PoD-2/P/CIR/2026/104",
+      "taxonomy": "Disclosure",
+      "date": "2026-07-02",
+      "status": "seeded_context_only"
+    },
+    {
+      "title": "Cybersecurity and Cyber Resilience Framework (CSCRF) for SEBI Regulated Entities",
+      "reference": "SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113",
+      "taxonomy": "Cyber Security & Resilience",
+      "date": "2024-08-20",
+      "status": "live_demo_entry"
+    },
+    {
+      "title": "Client Funds Segregation & Monitoring",
+      "reference": "SEBI/HO/MIRSD/DoR/CIR/2026/077",
+      "taxonomy": "Client Assets",
+      "date": "2026-05-19",
+      "status": "seeded_context_only"
+    },
+    {
+      "title": "AIF Investor Reporting Standards",
+      "reference": "SEBI/HO/AFD/PoD/CIR/2026/072",
+      "taxonomy": "Reporting",
+      "date": "2026-05-11",
+      "status": "seeded_context_only"
+    }
+  ]
+}

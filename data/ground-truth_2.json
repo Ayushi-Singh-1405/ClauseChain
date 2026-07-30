@@ -1,0 +1,146 @@
+{
+  "note": "Two tiers matching the pipeline's two stages. `clause_level_extractions` is what the Extraction Agent should return for ONE clause at a time. `compiled_rule_objects` is what the Rule Compilation Agent produces after merging related clause-level extractions into one obligation. A field set to null means the source clause doesn't specify it — return null, don't guess or omit silently.",
+
+  "clause_level_extractions": [
+    {
+      "citationId": "Cl. 4.3.1",
+      "obligation": "REs shall submit the VAPT report in the format at Annexure-A along with the MD/CEO declaration, to the designated reporting authority.",
+      "actorRole": "RE compliance/IT function",
+      "triggerCondition": "Upon completion of VAPT activity",
+      "frequency": null,
+      "deadlineRule": null,
+      "evidenceType": "VAPT report (Annexure-A format) + MD/CEO declaration",
+      "penalty": null
+    },
+    {
+      "citationId": "Cl. 4.3.2",
+      "obligation": "REs shall plan and complete VAPT activity per the specified periodicity; any unaudited period due to a category change must be included in the current audit cycle.",
+      "actorRole": "RE (planning); IT Committee for REs (oversight)",
+      "triggerCondition": "Beginning of financial year",
+      "frequency": "ANNUAL",
+      "deadlineRule": "VAPT to commence in Q1 of the financial year (for annual-frequency REs)",
+      "evidenceType": null,
+      "penalty": null
+    },
+    {
+      "citationId": "Cl. 4.3.3",
+      "obligation": "REs shall submit the VAPT report, close identified findings, and complete revalidation within the specified timelines after VAPT completion.",
+      "actorRole": "IT Committee for REs (approval); RE (execution)",
+      "triggerCondition": "Completion of VAPT activity",
+      "frequency": null,
+      "deadlineRule": "Report: within 1 month of completion (post IT Committee approval). Findings closure: within 3 months of report submission. Revalidation: within 5 months of completion.",
+      "evidenceType": "VAPT report; closure records; revalidation records",
+      "penalty": null
+    },
+    {
+      "citationId": "Cl. 4.3.4",
+      "obligation": "IT Committee shall track closure of vulnerabilities; open vulnerabilities after 3 months require IT Committee approval and must be closed before the next VAPT exercise; RE shall maintain a risk register.",
+      "actorRole": "IT Committee for REs",
+      "triggerCondition": "Ongoing, post-VAPT",
+      "frequency": "CONTINUOUS",
+      "deadlineRule": "Open vulnerabilities closed before next VAPT exercise",
+      "evidenceType": "Risk register",
+      "penalty": null
+    },
+    {
+      "citationId": "Cl. 4.3.5",
+      "obligation": "The revalidation report and open observations must be placed before the IT Committee for REs for confirmation and appropriate directions.",
+      "actorRole": "IT Committee for REs",
+      "triggerCondition": "Post-revalidation",
+      "frequency": null,
+      "deadlineRule": null,
+      "evidenceType": "Revalidation report",
+      "penalty": null
+    },
+    {
+      "citationId": "Annexure-O, Part B, Cl. 1",
+      "obligation": "REs shall notify SEBI and CERT-In of cybersecurity incidents within 6 hours of detection; report on the SEBI Incident Reporting Portal within 24 hours; Stock Brokers/DPs shall also notify their Exchange/Depository within 6 hours.",
+      "actorRole": "RE incident response team",
+      "triggerCondition": "EVENT_DRIVEN",
+      "frequency": "EVENT_DRIVEN",
+      "deadlineRule": "SEBI/CERT-In email notification: 6 hours. SEBI Incident Reporting Portal: 24 hours. Stock Exchange/Depository (for Stock Brokers/DPs): 6 hours.",
+      "evidenceType": "Incident notification email; SEBI Portal submission record",
+      "penalty": "Regulatory action possible if the RE fails to report despite being aware of the incident"
+    },
+    {
+      "citationId": "Annexure-O, Part B, Cl. 2",
+      "obligation": "Non-adherence to this incident-reporting SOP attracts regulatory action as per extant regulations for REs.",
+      "actorRole": "RE",
+      "triggerCondition": "Non-compliance with the SOP",
+      "frequency": null,
+      "deadlineRule": null,
+      "evidenceType": null,
+      "penalty": "Regulatory action as per extant SEBI regulations (not further quantified in this clause)"
+    },
+    {
+      "citationId": "Annexure-O, Part B, Cl. 3.1",
+      "obligation": "RE shall report the incident on the SEBI Incident Reporting Portal and via email; also report to CERT-In per their guidelines; CII/protected-system entities additionally report to NCIIPC.",
+      "actorRole": "RE",
+      "triggerCondition": "EVENT_DRIVEN",
+      "frequency": "EVENT_DRIVEN",
+      "deadlineRule": null,
+      "evidenceType": "Portal submission; email; CERT-In report; NCIIPC report where applicable",
+      "penalty": null
+    },
+    {
+      "citationId": "Annexure-O, Part B, Cl. 3.3",
+      "obligation": "RE shall submit a schedule of post-incident reports (Interim, Mitigation measures, RCA, VAPT-for-the-incident) within specified timelines from the date of reporting the incident.",
+      "actorRole": "RE",
+      "triggerCondition": "From the date of reporting the incident or being brought to notice about it",
+      "frequency": "EVENT_DRIVEN",
+      "deadlineRule": "Interim Report: 3 days. Mitigation measures: 7 days. RCA report: 30 days. VAPT for the incident and closure report: 45 days.",
+      "evidenceType": "Interim report; mitigation report; RCA report; post-incident VAPT closure report",
+      "penalty": null
+    }
+  ],
+
+  "compiled_rule_objects": [
+    {
+      "id": "CRO-DEMO-01",
+      "obligation": "REs shall conduct Vulnerability Assessment and Penetration Testing (VAPT) at the specified periodicity, submit the report within the required timeline, and close/revalidate findings on schedule.",
+      "source": {
+        "circular": "SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113",
+        "clausesMerged": ["Cl. 4.3.1", "Cl. 4.3.2", "Cl. 4.3.3", "Cl. 4.3.4", "Cl. 4.3.5"]
+      },
+      "actorRole": "IT Committee for REs (oversight); RE (execution)",
+      "taxonomy": "Cyber Security & Resilience",
+      "frequency": "ANNUAL",
+      "triggerCondition": "Upon completion of VAPT activity",
+      "deadlineRule": "Report: within 1 month of completion. Findings closure: within 3 months of report submission. Revalidation: within 5 months of completion.",
+      "deadlineDays": 30,
+      "evidenceRequired": [
+        "VAPT report (Annexure-A format)",
+        "MD/CEO declaration (Annexure-A)",
+        "Risk register"
+      ],
+      "penalty": null,
+      "status": "pending_extraction_test",
+      "version": 1
+    },
+    {
+      "id": "CRO-DEMO-02",
+      "obligation": "REs shall report cybersecurity incidents to SEBI/CERT-In within the mandated timelines and submit the full sequence of post-incident reports.",
+      "source": {
+        "circular": "SEBI/HO/ITD-1/ITD_CSC_EXT/P/CIR/2024/113",
+        "clausesMerged": ["Annexure-O, Part B, Cl. 1", "Annexure-O, Part B, Cl. 2", "Annexure-O, Part B, Cl. 3.1", "Annexure-O, Part B, Cl. 3.3"]
+      },
+      "actorRole": "RE incident response team",
+      "taxonomy": "Cyber Security & Resilience",
+      "frequency": "EVENT_DRIVEN",
+      "triggerCondition": "Cybersecurity incident detected or noticed",
+      "deadlineRule": "SEBI/CERT-In notification: 6 hours. SEBI Portal: 24 hours. Interim Report: 3 days. Mitigation measures: 7 days. RCA report: 30 days. Post-incident VAPT and closure report: 45 days.",
+      "deadlineDays": 0,
+      "evidenceRequired": [
+        "Incident notification email to mkt_incidents@sebi.gov.in",
+        "SEBI Incident Reporting Portal submission",
+        "Interim Report",
+        "Mitigation measures report",
+        "Root Cause Analysis (RCA) report",
+        "Post-incident VAPT and closure report"
+      ],
+      "penalty": "Regulatory action as per extant SEBI regulations for non-adherence to the SOP",
+      "status": "pending_extraction_test",
+      "version": 1
+    }
+  ]
+}
