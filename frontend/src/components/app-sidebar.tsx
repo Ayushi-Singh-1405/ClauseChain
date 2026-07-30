@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   FileText,
@@ -12,6 +13,7 @@ import {
   ScrollText,
   Bot,
   Settings,
+  LogIn,
 } from 'lucide-react'
 
 import {
@@ -34,11 +36,20 @@ const navItems = [
   { label: 'Evidence', href: '/evidence', icon: Upload },
   { label: 'Audit Trail', href: '/audit', icon: ScrollText },
   { label: 'Copilot', href: '/copilot', icon: Bot },
+  { label: 'Login', href: '/login', icon: LogIn },
   { label: 'Settings', href: '/settings', icon: Settings },
 ]
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token && pathname !== '/login') {
+      router.replace('/login')
+    }
+  }, [pathname, router])
 
   return (
     <Sidebar>
