@@ -24,6 +24,7 @@ interface AuditEntry {
 export default function AuditPage() {
   const [entries, setEntries] = useState<AuditEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 20
@@ -31,8 +32,15 @@ export default function AuditPage() {
   useEffect(() => {
     api.get<{ entries: AuditEntry[]; total: number }>(`/api/audit?page=${page}&limit=${limit}`)
       .then((data) => { setEntries(data.entries); setTotal(data.total) })
+      .catch(() => setError('Failed to load the audit log. Is the backend running?'))
       .finally(() => setLoading(false))
   }, [page])
+
+  function goToPage(p: number) {
+    setPage(p)
+    setLoading(true)
+    setError(null)
+  }
 
   const totalPages = Math.ceil(total / limit)
 
@@ -44,11 +52,14 @@ export default function AuditPage() {
       <Card>
         <CardHeader><CardTitle>Audit Log ({total} entries)</CardTitle></CardHeader>
         <CardContent>
+          {error && (
+            <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
           {loading ? (
             <div className="space-y-2"><Skeleton className="h-8 w-full" /><Skeleton className="h-8 w-full" /></div>
-          ) : entries.length === 0 ? (
+          ) : !error && entries.length === 0 ? (
             <p className="text-muted-foreground">No audit entries yet.</p>
-          ) : (
+          ) : !error ? (
             <>
               <Table>
                 <TableHeader>
@@ -77,12 +88,12 @@ export default function AuditPage() {
               <div className="flex items-center justify-between pt-4">
                 <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                  <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                  <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => goToPage(page - 1)}>Previous</Button>
+                  <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>Next</Button>
                 </div>
               </div>
             </>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </div>

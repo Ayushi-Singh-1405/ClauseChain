@@ -28,20 +28,44 @@ interface PendingRule {
 export default function RuleReviewPage() {
   const [rules, setRules] = useState<PendingRule[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [pendingId, setPendingId] = useState<string | null>(null)
 
   useEffect(() => {
-    api.get<PendingRule[]>('/api/rules/pending').then(setRules).finally(() => setLoading(false))
+    api.get<PendingRule[]>('/api/rules/pending')
+      .then(setRules)
+      .catch(() => setError('Failed to load pending rules. Is the backend running?'))
+      .finally(() => setLoading(false))
   }, [])
 
   async function handleApprove(id: string) {
-    await api.post(`/api/rules/${id}/approve`, { approvedBy: 'demo-user' })
-    setRules((prev) => prev.filter((r) => r.id !== id))
+    if (pendingId) return
+    setPendingId(id)
+    setError(null)
+    try {
+      await api.post(`/api/rules/${id}/approve`, { approvedBy: 'demo-user' })
+      setRules((prev) => prev.filter((r) => r.id !== id))
+    } catch (e) {
+      setError(`Failed to approve rule: ${(e as Error).message}`)
+    } finally {
+      setPendingId(null)
+    }
   }
 
   async function handleReject(id: string) {
+    if (pendingId) return
     const reason = prompt('Rejection reason:')
-    await api.post(`/api/rules/${id}/reject`, { rejectionReason: reason || 'Rejected by reviewer' })
-    setRules((prev) => prev.filter((r) => r.id !== id))
+    if (reason === null) return
+    setPendingId(id)
+    setError(null)
+    try {
+      await api.post(`/api/rules/${id}/reject`, { rejectionReason: reason || 'Rejected by reviewer' })
+      setRules((prev) => prev.filter((r) => r.id !== id))
+    } catch (e) {
+      setError(`Failed to reject rule: ${(e as Error).message}`)
+    } finally {
+      setPendingId(null)
+    }
   }
 
   const confidenceColor = (c: number | null) => {
@@ -65,6 +89,10 @@ export default function RuleReviewPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Rule Review</h1>
       <p className="text-muted-foreground">Review extracted obligations. Approve to add them to the Compliance Register, or reject with a reason.</p>
+
+      {error && (
+        <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      )}
 
       {loading ? (
         <div className="space-y-4"><Skeleton className="h-32 w-full" /><Skeleton className="h-32 w-full" /></div>
@@ -106,8 +134,12 @@ export default function RuleReviewPage() {
                     </div>
                   )}
                   <div className="flex gap-2 pt-3">
-                    <Button size="sm" onClick={() => handleApprove(rule.id)}>Approve</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleReject(rule.id)}>Reject</Button>
+                    <Button size="sm" disabled={pendingId !== null} onClick={() => handleApprove(rule.id)}>
+                      {pendingId === rule.id ? 'Approving…' : 'Approve'}
+                    </Button>
+                    <Button size="sm" variant="destructive" disabled={pendingId !== null} onClick={() => handleReject(rule.id)}>
+                      {pendingId === rule.id ? 'Rejecting…' : 'Reject'}
+                    </Button>
                   </div>
                 </div>
               </CardContent>

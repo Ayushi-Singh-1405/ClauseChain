@@ -20,9 +20,13 @@ interface DashboardMetrics {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardMetrics | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    api.get<DashboardMetrics>('/api/dashboard/metrics').then(setData).finally(() => setLoading(false))
+    api.get<DashboardMetrics>('/api/dashboard/metrics')
+      .then(setData)
+      .catch(() => setError('Failed to load dashboard metrics. Is the backend running?'))
+      .finally(() => setLoading(false))
   }, [])
 
   if (loading) {
@@ -36,7 +40,16 @@ export default function DashboardPage() {
     )
   }
 
-  if (!data) return <p className="text-muted-foreground">Failed to load dashboard.</p>
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      </div>
+    )
+  }
+
+  if (!data) return <p className="text-muted-foreground">No dashboard data available.</p>
 
   const cards = [
     { title: 'Circulars', value: data.totalCirculars, desc: 'Total ingested' },
