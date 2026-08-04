@@ -55,12 +55,24 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.post('/:id/approve', async (req: Request, res: Response) => {
   const id = req.params.id as string
   const approvedBy = bodyAsString(req.body.approvedBy) || 'demo-user'
-  const rule = await prisma.complianceRuleObject.update({
-    where: { id },
-    data: { status: 'approved', approvedBy },
-  })
+  const existing = await prisma.complianceRuleObject.findUnique({ where: { id } })
+  if (!existing) {
+    res.status(404).json({ error: 'Rule not found' })
+    return
+  }
 
-  await generateTasks(id)
+  const rule = existing.status === 'approved'
+    ? existing
+    : await prisma.complianceRuleObject.update({
+        where: { id },
+        data: { status: 'approved', approvedBy },
+      })
+
+  const existingTasks = await prisma.complianceTask.count({ where: { ruleObjectId: id } })
+  if (existingTasks === 0) {
+    await generateTasks(id)
+  }
+
   await writeAudit('rule', id, 'approved', approvedBy)
 
   res.json(rule)

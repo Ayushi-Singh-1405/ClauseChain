@@ -35,7 +35,7 @@ export default function CopilotPage() {
       const { answer } = await api.post<{ answer: string }>('/api/copilot/query', { question })
       setMessages((prev) => [...prev, { role: 'assistant', content: answer }])
     } catch (e) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: `Error: ${(e as Error).message}` }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: `Sorry, I couldn't reach the AI service. Please try again. (${(e as Error).message})` }])
     } finally {
       setLoading(false)
     }
