@@ -25,6 +25,19 @@ router.post('/upload', async (req: Request, res: Response) => {
   }
 
   const fileContent = fileData || ''
+
+  if (taskId) {
+    const task = await prisma.complianceTask.findUnique({ where: { id: taskId } })
+    if (!task) {
+      res.status(400).json({ error: 'Task not found' })
+      return
+    }
+    await prisma.complianceTask.update({
+      where: { id: taskId },
+      data: { status: 'in-review' },
+    })
+  }
+
   const contentHash = crypto.createHash('sha256').update(fileContent).digest('hex')
 
   const evidence = await prisma.evidence.create({
@@ -37,13 +50,6 @@ router.post('/upload', async (req: Request, res: Response) => {
       uploadedBy: 'demo-user',
     },
   })
-
-  if (taskId) {
-    await prisma.complianceTask.update({
-      where: { id: taskId },
-      data: { status: 'in-review' },
-    }).catch(() => {})
-  }
 
   await writeAudit('evidence', evidence.id, 'uploaded', 'demo-user', `uploaded file: ${filename}`)
 

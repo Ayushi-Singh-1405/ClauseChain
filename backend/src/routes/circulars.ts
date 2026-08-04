@@ -6,6 +6,8 @@ import { extractCRO } from '../agents/extraction'
 
 const router = Router()
 
+const processing = new Set<string>()
+
 function bodyAsString(val: unknown): string | undefined {
   if (Array.isArray(val)) return val[0]
   if (typeof val === 'string') return val
@@ -113,9 +115,18 @@ router.post('/:id/extract', async (req: Request, res: Response) => {
     return
   }
 
+  const existingRuleClauseIds = new Set(
+    (await prisma.complianceRuleObject.findMany({
+      where: { circularId: circular.id },
+      select: { clauseId: true },
+    })).map((r) => r.clauseId).filter((x): x is string => !!x),
+  )
+
   const results: { citationId: string; success: boolean; confidence?: number; error?: string }[] = []
+  let savedCount = 0
 
   for (const clause of circular.clauses) {
+    if (existingRuleClauseIds.has(clause.id)) continue
     try {
       const extraction = await extractCRO(clause.citationId, clause.rawText)
       await prisma.complianceRuleObject.create({
@@ -136,6 +147,7 @@ router.post('/:id/extract', async (req: Request, res: Response) => {
           source: { clause: clause.citationId },
         },
       })
+      savedCount++
       results.push({ citationId: clause.citationId, success: true, confidence: extraction.confidence })
     } catch (err) {
       results.push({ citationId: clause.citationId, success: false, error: (err as Error).message })
@@ -144,10 +156,10 @@ router.post('/:id/extract', async (req: Request, res: Response) => {
 
   await prisma.circular.update({
     where: { id: circular.id },
-    data: { status: 'extracted' },
+    data: { status: savedCount > 0 ? 'extracted' : 'segmented' },
   })
 
-  res.json({ circularId: circular.id, results })
+  res.json({ circularId: circular.id, savedCount, results })
 })
 
 router.post('/:id/process', async (req: Request, res: Response) => {
@@ -157,62 +169,97 @@ router.post('/:id/process', async (req: Request, res: Response) => {
     res.status(404).json({ error: 'Circular not found' })
     return
   }
-
-  const clauses = segmentClauses(circular.rawText)
-  await prisma.clause.createMany({
-    data: clauses.map((c) => ({
-      circularId: circular.id,
-      citationId: c.citationId,
-      rawText: c.rawText,
-    })),
-    skipDuplicates: true,
-  })
-
-  await prisma.circular.update({
-    where: { id: circular.id },
-    data: { status: 'segmented' },
-  })
-
-  const saved = await prisma.clause.findMany({
-    where: { circularId: circular.id },
-    orderBy: { citationId: 'asc' },
-  })
-
-  const results: { citationId: string; success: boolean; confidence?: number; error?: string }[] = []
-
-  for (const clause of saved) {
-    try {
-      const extraction = await extractCRO(clause.citationId, clause.rawText)
-      await prisma.complianceRuleObject.create({
-        data: {
-          circularId: circular.id,
-          clauseId: clause.id,
-          obligation: extraction.obligation,
-          actorRole: extraction.actorRole,
-          taxonomy: extraction.taxonomy,
-          frequency: extraction.frequency,
-          triggerCondition: extraction.triggerCondition,
-          deadlineRule: extraction.deadlineRule,
-          deadlineDays: extraction.deadlineDays,
-          evidenceRequired: extraction.evidenceRequired,
-          penalty: extraction.penalty,
-          confidence: extraction.confidence,
-          status: 'pending',
-          source: { clause: clause.citationId },
-        },
-      })
-      results.push({ citationId: clause.citationId, success: true, confidence: extraction.confidence })
-    } catch (err) {
-      results.push({ citationId: clause.citationId, success: false, error: (err as Error).message })
-    }
+  if (processing.has(id)) {
+    res.status(409).json({ error: 'Circular is already being processed' })
+    return
   }
 
-  await prisma.circular.update({
-    where: { id: circular.id },
-    data: { status: 'extracted' },
-  })
+  processing.add(id)
+  try {
+    let saved = await prisma.clause.findMany({
+      where: { circularId: circular.id },
+      orderBy: { citationId: 'asc' },
+    })
 
-  res.json({ circularId: circular.id, clauseCount: saved.length, results })
+    if (saved.length === 0) {
+      const clauses = segmentClauses(circular.rawText)
+      await prisma.clause.createMany({
+        data: clauses.map((c) => ({
+          circularId: circular.id,
+          citationId: c.citationId,
+          rawText: c.rawText,
+        })),
+        skipDuplicates: true,
+      })
+
+      await prisma.circular.update({
+        where: { id: circular.id },
+        data: { status: 'segmented' },
+      })
+
+      saved = await prisma.clause.findMany({
+        where: { circularId: circular.id },
+        orderBy: { citationId: 'asc' },
+      })
+    }
+
+    const existingRuleClauseIds = new Set(
+      (await prisma.complianceRuleObject.findMany({
+        where: { circularId: circular.id },
+        select: { clauseId: true },
+      })).map((r) => r.clauseId).filter((x): x is string => !!x),
+    )
+
+    const results: { citationId: string; success: boolean; confidence?: number; error?: string }[] = []
+    let savedCount = 0
+
+    for (const clause of saved) {
+      if (existingRuleClauseIds.has(clause.id)) continue
+      try {
+        const extraction = await extractCRO(clause.citationId, clause.rawText)
+        await prisma.complianceRuleObject.create({
+          data: {
+            circularId: circular.id,
+            clauseId: clause.id,
+            obligation: extraction.obligation,
+            actorRole: extraction.actorRole,
+            taxonomy: extraction.taxonomy,
+            frequency: extraction.frequency,
+            triggerCondition: extraction.triggerCondition,
+            deadlineRule: extraction.deadlineRule,
+            deadlineDays: extraction.deadlineDays,
+            evidenceRequired: extraction.evidenceRequired,
+            penalty: extraction.penalty,
+            confidence: extraction.confidence,
+            status: 'pending',
+            source: { clause: clause.citationId },
+          },
+        })
+        savedCount++
+        results.push({ citationId: clause.citationId, success: true, confidence: extraction.confidence })
+      } catch (err) {
+        results.push({ citationId: clause.citationId, success: false, error: (err as Error).message })
+      }
+    }
+
+    if (results.length > 0) {
+      const allSucceeded = results.every((r) => r.success)
+      await prisma.circular.update({
+        where: { id: circular.id },
+        data: { status: allSucceeded ? 'extracted' : 'segmented' },
+      })
+    }
+
+    res.json({
+      circularId: circular.id,
+      clauseCount: saved.length,
+      savedCount,
+      failedCount: results.length - savedCount,
+      results,
+    })
+  } finally {
+    processing.delete(id)
+  }
 })
 
 export default router

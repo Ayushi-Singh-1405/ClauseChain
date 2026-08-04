@@ -23,28 +23,62 @@ interface Circular {
 export default function CircularsPage() {
   const [circulars, setCirculars] = useState<Circular[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [rawText, setRawText] = useState('')
   const [ingesting, setIngesting] = useState(false)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+  const [ingestError, setIngestError] = useState<string | null>(null)
+
+  async function loadCirculars() {
+    try {
+      setCirculars(await api.get<Circular[]>('/api/circulars'))
+    } catch {
+      setError('Failed to load circulars. Is the backend running?')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    api.get<Circular[]>('/api/circulars').then(setCirculars).finally(() => setLoading(false))
+    api.get<Circular[]>('/api/circulars')
+      .then(setCirculars)
+      .catch(() => setError('Failed to load circulars. Is the backend running?'))
+      .finally(() => setLoading(false))
   }, [])
 
   async function handleIngest() {
     if (!title || !rawText) return
     setIngesting(true)
+    setIngestError(null)
     try {
-      const circ = await api.post<{ id: string }>('/api/circulars/ingest', { title, rawText })
-      setCirculars((prev) => [...prev, { ...circ, source: '', ref: null, status: 'ingested', createdAt: new Date().toISOString(), _count: { clauses: 0, rules: 0 } } as Circular])
+      await api.post<{ id: string }>('/api/circulars/ingest', { title, rawText })
       setOpen(false)
       setTitle('')
       setRawText('')
+      await loadCirculars()
     } catch (e) {
-      alert((e as Error).message)
+      setIngestError((e as Error).message)
     } finally {
       setIngesting(false)
+    }
+  }
+
+  async function handleProcess(id: string) {
+    if (processingId) return
+    setProcessingId(id)
+    setError(null)
+    try {
+      const res = await api.post<{ clauseCount: number; failedCount: number }>(`/api/circulars/${id}/process`)
+      if (res.failedCount > 0) {
+        setError(`Processing finished with ${res.failedCount} of ${res.clauseCount} clause(s) failed. Click Process again to retry the remaining clauses.`)
+      }
+      await loadCirculars()
+    } catch (e) {
+      setError(`Processing failed: ${(e as Error).message}`)
+    } finally {
+      setProcessingId(null)
     }
   }
 
@@ -58,13 +92,16 @@ export default function CircularsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Circulars</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setIngestError(null) }}>
           <DialogTrigger render={<Button>Ingest New</Button>} />
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Ingest Circular</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {ingestError && (
+                <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{ingestError}</p>
+              )}
               <Input placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
               <textarea
                 className="w-full min-h-[300px] rounded-md border p-3 text-sm font-mono"
@@ -83,9 +120,12 @@ export default function CircularsPage() {
       <Card>
         <CardHeader><CardTitle>All Circulars</CardTitle></CardHeader>
         <CardContent>
+          {error && (
+            <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
           {loading ? (
             <div className="space-y-2"><Skeleton className="h-8 w-full" /><Skeleton className="h-8 w-full" /></div>
-          ) : circulars.length === 0 ? (
+          ) : !error && circulars.length === 0 ? (
             <p className="text-muted-foreground">No circulars yet. Ingest one to get started.</p>
           ) : (
             <Table>
@@ -97,6 +137,7 @@ export default function CircularsPage() {
                   <TableHead className="text-right">Clauses</TableHead>
                   <TableHead className="text-right">Rules</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -108,6 +149,15 @@ export default function CircularsPage() {
                     <TableCell className="text-right">{c._count.clauses}</TableCell>
                     <TableCell className="text-right">{c._count.rules}</TableCell>
                     <TableCell>{new Date(c.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right">
+                      {c.status === 'ingested' || c.status === 'segmented' ? (
+                        <Button size="sm" disabled={!!processingId} onClick={() => handleProcess(c.id)}>
+                          {processingId === c.id ? 'Processing…' : 'Process'}
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Ready</span>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
