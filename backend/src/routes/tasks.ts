@@ -4,6 +4,9 @@ import { writeAudit } from '../lib/audit'
 
 const router = Router()
 
+const TASK_STATUSES = ['todo', 'in-progress', 'in-review', 'done'] as const
+type TaskStatus = (typeof TASK_STATUSES)[number]
+
 router.get('/', async (req: Request, res: Response) => {
   const where: Record<string, unknown> = {}
   if (req.query.status) where.status = req.query.status
@@ -39,8 +42,14 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.patch('/:id/move', async (req: Request, res: Response) => {
   const id = req.params.id as string
   const { status } = req.body
-  if (!['todo', 'in-progress', 'in-review', 'done'].includes(status)) {
-    res.status(400).json({ error: 'Invalid status' })
+  if (!(TASK_STATUSES as readonly string[]).includes(status)) {
+    res.status(400).json({ error: `Invalid status. Must be one of: ${TASK_STATUSES.join(', ')}` })
+    return
+  }
+
+  const existing = await prisma.complianceTask.findUnique({ where: { id } })
+  if (!existing) {
+    res.status(404).json({ error: 'Task not found' })
     return
   }
 

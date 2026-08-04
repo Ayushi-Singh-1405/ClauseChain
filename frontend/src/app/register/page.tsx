@@ -12,7 +12,7 @@ interface Task {
   title: string
   status: string
   dueDate: string
-  assignee: string | null
+  owner: string
 }
 
 interface ApprovedRule {
@@ -36,16 +36,24 @@ interface ApprovedRule {
 export default function RegisterPage() {
   const [rules, setRules] = useState<ApprovedRule[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    api.get<ApprovedRule[]>('/api/rules/approved').then(setRules).finally(() => setLoading(false))
+    api.get<ApprovedRule[]>('/api/rules/approved')
+      .then(setRules)
+      .catch(() => setError('Failed to load the compliance register. Is the backend running?'))
+      .finally(() => setLoading(false))
   }, [])
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Compliance Register</h1>
       <p className="text-muted-foreground">Approved compliance rule objects and their generated tasks.</p>
+
+      {error && (
+        <p className="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      )}
 
       {loading ? (
         <div className="space-y-2"><Skeleton className="h-8 w-full" /><Skeleton className="h-8 w-full" /></div>
@@ -89,10 +97,10 @@ export default function RegisterPage() {
                               <p className="text-sm font-medium">Tasks</p>
                               {r.tasks.map((t) => (
                                 <div key={t.id} className="flex items-center gap-3 rounded-md border bg-background p-2 text-sm">
-                                  <Badge variant={t.status === 'done' ? 'default' : t.status === 'in_progress' ? 'secondary' : 'outline'}>{t.status}</Badge>
+                                  <Badge variant={t.status === 'done' ? 'default' : t.status === 'in-progress' ? 'secondary' : 'outline'}>{t.status}</Badge>
                                   <span>{t.title}</span>
                                   <span className="ml-auto text-muted-foreground">{t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '—'}</span>
-                                  <span className="text-muted-foreground">{t.assignee || 'Unassigned'}</span>
+                                  <span className="text-muted-foreground">{t.owner || 'Unassigned'}</span>
                                 </div>
                               ))}
                             </div>
