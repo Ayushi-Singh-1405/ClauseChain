@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const { token } = await api.post<{ token: string }>('/api/auth/login', { email, password })
       localStorage.setItem('token', token)
-      router.push('/')
+      router.push('/dashboard')
     } catch (err) {
       setError((err as Error).message)
     } finally {

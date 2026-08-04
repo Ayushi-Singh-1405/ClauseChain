@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/sidebar'
 
 const navItems = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Circulars', href: '/circulars', icon: FileText },
   { label: 'Rule Review', href: '/rule-review', icon: Scale },
   { label: 'Register', href: '/register', icon: ClipboardCheck },
